@@ -1,13 +1,15 @@
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from config import *
 
-db = SQLAlchemy()
+db = SQLAlchemy(app)
 
 class Venue(db.Model):
     __tablename__ = 'Venue'
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
-    genres = db.Column(db.Array(db.String()))
+    genres = db.Column(db.ARRAY(db.String()))
     city = db.Column(db.String(120))
     state = db.Column(db.String(120))
     address = db.Column(db.String(120))
@@ -64,8 +66,8 @@ class Show(db.Model):
     seeking_talent = db.Column(db.Boolean)
     seeking_description = db.Column(db.String(500))
     image_link = db.Column(db.String(500))
-    past_shows = db.Column(db.Array(db.String()))
-    upcoming_shows = db.Column(db.Array(db.String()))
+    past_shows = db.Column(db.ARRAY(db.String()))
+    upcoming_shows = db.Column(db.ARRAY(db.String()))
     past_shows_count = db.Column(db.Integer)
     upcoming_shows_count = db.Column(db.Integer)
     
@@ -74,3 +76,5 @@ class Show(db.Model):
     
     def __repr__(self):
       return'<Show {}>'.format(self.name)
+
+db.create_all()
