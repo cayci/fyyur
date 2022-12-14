@@ -81,6 +81,7 @@ def venues():
   regions = Venue.query.distinct(Venue.city, Venue.state).all()
 
   data = []
+
   for region in regions:
     venues_data = Venue.query.filter_by(city=region.city, state=region.state).order_by('id').all()
     venues = []
@@ -234,30 +235,32 @@ def create_venue_submission():
   # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
   return render_template('pages/home.html')
 
-@app.route('/venues/<venue_id>/delete', methods=['DELETE'])
+@app.route('/venues/<venue_id>/delete', methods=['GET'])
 def delete_venue(venue_id):
   # TODO: Complete this endpoint for taking a venue_id, and using
   # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
-  try:
+  #try:
 
-    venue=Venue.query.filter(Venue.id==venue_id).one_or_none()
+  venue=Venue.query.filter(Venue.id==venue_id).one_or_none()
     
-    if venue is None:
-        abort(404)
+  #if venue is None:
+  #      abort(404)
 
-    venue.delete()
+  #db.delete(venue)
+  #db.session.commit()
+  venue.delete()
 
-    selection=Venue.query.order_by(Venue.id).all()
-    current_venues=paginate_venues(request,selection)
+  selection=Venue.query.order_by(Venue.id).all()
+  current_venues=paginate_venues(request,selection)
 
-    return jsonify({
-        "success":True,
-        "deleted":venue_id,
-        "venues":current_venues,
-        "total_venues":len(Venue.query.all())
-    })
-  except:
-        abort(422)
+  return jsonify({
+    "success":True,
+    "deleted":venue_id,
+    "venues":current_venues,
+    "total_venues":len(Venue.query.all())
+  })
+  #except:
+  #      abort(422)
 
 
   # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that

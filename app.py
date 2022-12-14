@@ -14,6 +14,8 @@ from flask_wtf import Form
 from forms import *
 from config import *
 from models import *
+from pprint import pprint
+
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -117,6 +119,35 @@ def search_venues():
 def show_venue(venue_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
+  venue = Venue.query.filter_by(id=venue_id).order_by('id').one()
+  data={
+    "id": venue.id,
+    "name": venue.name,
+    "genres": venue.genres,
+    "address": venue.address,
+    "city": venue.city,
+    "state": venue.state,
+    "phone": venue.phone,
+    "website": venue.website,
+    "facebook_link": venue.facebook_link,
+    "seeking_talent": venue.seeking_talent,
+    "seeking_description": venue.seeking_description,
+    "image_link": venue.image_link,
+    "past_shows": [{
+      "artist_id": 4,
+      "artist_name": "Guns N Petals",
+      "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
+      "start_time": "2019-05-21T21:30:00.000Z"
+    }],
+    "upcoming_shows": [],
+    "past_shows_count": 1,
+    "upcoming_shows_count": 0,   
+    } 
+    #TODO: FINISH ARTIST AND SHOWS SECTION
+  
+  return render_template('pages/show_venue.html', venue=data)  
+    
+  """
   data1={
     "id": 1,
     "name": "The Musical Hop",
@@ -196,6 +227,8 @@ def show_venue(venue_id):
   }
   data = list(filter(lambda d: d['id'] == venue_id, [data1, data2, data3]))[0]
   return render_template('pages/show_venue.html', venue=data)
+  
+  """
 
 #  Create Venue
 #  ----------------------------------------------------------------
@@ -209,10 +242,10 @@ def create_venue_form():
 def create_venue_submission():
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
-
+  form = VenueForm(request.form)
   id = request.form.get('id')
   name = request.form.get('name')
-  genres = request.form.get('genres')
+  genres = form.genres.data
   city = request.form.get('city')
   state = request.form.get('state')
   address = request.form.get('address')
@@ -235,32 +268,45 @@ def create_venue_submission():
   # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
   return render_template('pages/home.html')
 
-@app.route('/venues/<venue_id>/delete', methods=['DELETE'])
+@app.route('/venues/<venue_id>/delete', methods=['GET'])
 def delete_venue(venue_id):
   # TODO: Complete this endpoint for taking a venue_id, and using
   # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
   try:
+    Venue.query.filter_by(id=venue_id).delete()
+    db.session.commit()
+  except:
+    db.session.rollback()
+  finally:
+    db.session.close()
+  return redirect(url_for('index'))
 
+  """
+  try:
     venue=Venue.query.filter(Venue.id==venue_id).one_or_none()
     
-    if venue is None:
-        abort(404)
+  #if venue is None:
+  #      abort(404)
 
-    venue.delete()
+  #db.delete(venue)
+  #db.session.commit()
+  venue.delete()
 
-    selection=Venue.query.order_by(Venue.id).all()
-    current_venues=paginate_venues(request,selection)
+  selection=Venue.query.order_by(Venue.id).all()
+  current_venues=paginate_venues(request,selection)
 
-    return jsonify({
-        "success":True,
-        "deleted":venue_id,
-        "venues":current_venues,
-        "total_venues":len(Venue.query.all())
-    })
-  except:
-        abort(422)
+  return jsonify({
+    "success":True,
+    "deleted":venue_id,
+    "venues":current_venues,
+    "total_venues":len(Venue.query.all())
+  })
+  #except:
+  #      abort(422)
 
-
+  """
+    
+    
   # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
   # clicking that button delete it from the db then redirect the user to the homepage
 
