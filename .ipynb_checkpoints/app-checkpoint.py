@@ -55,30 +55,6 @@ def index():
 def venues():
   # TODO: replace with real venues data.
   #       num_upcoming_shows should be aggregated based on number of upcoming shows per venue.
-  """
-  data=[{
-    "city": "San Francisco",
-    "state": "CA",
-    "venues": [{
-      "id": 1,
-      "name": "The Musical Hop",
-      "num_upcoming_shows": 0,
-    }, {
-      "id": 3,
-      "name": "Park Square Live Music & Coffee",
-      "num_upcoming_shows": 1,
-    }]
-  }, {
-    "city": "New York",
-    "state": "NY",
-    "venues": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }]
-  return render_template('pages/venues.html', areas=data);
-  """ 
   
   regions = Venue.query.distinct(Venue.city, Venue.state).all()
 
@@ -105,15 +81,22 @@ def search_venues():
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for Hop should return "The Musical Hop".
   # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
+  search_term=request.form.get('search_term', '')
+  venues = Venue.query.filter(Venue.name.ilike("%" + search_term + "%")).order_by('name').all()
+  data = []
+  for venue in venues:
+    data.append({
+        "id": venue.id,
+        "name": venue.name,
+        "num_upcoming_shows": len(venue.shows)
+    })
+
   response={
-    "count": 1,
-    "data": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
+    "count": len(venues),
+    "data": data
   }
-  return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
+    
+  return render_template('pages/search_venues.html', results=response, search_term=search_term)
 
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
@@ -475,60 +458,39 @@ def edit_artist_submission(artist_id):
 
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
-  venue_data = Venue.query.filter_by(id=venue_id).order_by('id').one()
-  
-  venue={
-    "id": venue_data.id,
-    "name": venue_data.name,
-    "genres": venue_data.genres,
-    "address": venue_data.address,
-    "city": venue_data.city,
-    "state": venue_data.state,
-    "phone": venue_data.phone,
-    "website": venue_data.website,
-    "facebook_link": venue_data.facebook_link,
-    "seeking_talent": venue_data.seeking_talent,
-    "seeking_description": venue_data.seeking_description,
-    "image_link": venue_data.image_link
-  }
-
-  form = VenueForm(venue)
-    
+  venue = Venue.query.get_or_404(venue_id)
+  form = VenueForm(obj=venue)
   # TODO: populate form with values from venue with ID <venue_id>
-  return render_template('forms/edit_venue.html', form=form, venue=venue)
-    
+  return render_template(
+    'forms/edit_venue.html', 
+    form=form, 
+    venue=venue
+  )
+  
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
   # TODO: take values from the form submitted, and update existing
   # venue record with ID <venue_id> using the new attributes
-  return redirect(url_for('show_venue', venue_id=venue_id))
     
-  """
-  form = VenueForm()
-  venue={
-    "id": 1,
-    "name": "The Musical Hop",
-    "genres": ["Jazz", "Reggae", "Swing", "Classical", "Folk"],
-    "address": "1015 Folsom Street",
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "123-123-1234",
-    "website": "https://www.themusicalhop.com",
-    "facebook_link": "https://www.facebook.com/TheMusicalHop",
-    "seeking_talent": True,
-    "seeking_description": "We are on the lookout for a local artist to play every two weeks. Please call us.",
-    "image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60"
-  }
-  # TODO: populate form with values from venue with ID <venue_id>
-  return render_template('forms/edit_venue.html', form=form, venue=venue)
+  form = VenueForm(request.form)
+  venue = Venue.query.get_or_404(venue_id)
 
-@app.route('/venues/<int:venue_id>/edit', methods=['POST'])
-def edit_venue_submission(venue_id):
-  # TODO: take values from the form submitted, and update existing
-  # venue record with ID <venue_id> using the new attributes
+  venue.name = request.form.get('name')
+  venue.genres = form.genres.data
+  venue.city = request.form.get('city')
+  venue.state = request.form.get('state')
+  venue.address = request.form.get('address')
+  venue.phone = request.form.get('phone')
+  venue.image_link = request.form.get('image_link')
+  venue.facebook_link = request.form.get('facebook_link')
+  venue.website = request.form.get('website')
+  venue.seeking_talent = request.form.get('seeking_talent')
+  venue.seeking_description = request.form.get('seeking_description')
+
+  db.session.add(venue)
+  db.session.commit()
+    
   return redirect(url_for('show_venue', venue_id=venue_id))
-  
-  """ 
 
 #  Create Artist
 #  ----------------------------------------------------------------
