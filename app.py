@@ -299,7 +299,17 @@ def delete_venue(venue_id):
 @app.route('/artists')
 def artists():
   # TODO: replace with real data returned from querying the database
-  data=[{
+  data = []
+  artists = Artist.query.order_by('name').all()
+  for artist in artists:
+    data.append({
+      "id": artist.id,
+      "name": artist.name,
+    })  
+  return render_template('pages/artists.html', artists=data)
+    
+  """
+    data=[{
     "id": 4,
     "name": "Guns N Petals",
   }, {
@@ -310,26 +320,39 @@ def artists():
     "name": "The Wild Sax Band",
   }]
   return render_template('pages/artists.html', artists=data)
+  
+  """
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
   # search for "band" should return "The Wild Sax Band".
-  response={
-    "count": 1,
-    "data": [{
-      "id": 4,
-      "name": "Guns N Petals",
-      "num_upcoming_shows": 0,
-    }]
-  }
-  return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
+  search_term=request.form.get('search_term', '')
+  artists = Artist.query.filter(Artist.name.ilike("%" + search_term + "%")).order_by('name').all()
+  data = []
+  for artist in artists:
+    data.append({
+        "id": artist.id,
+        "name": artist.name,
+        "num_upcoming_shows": len(artist.shows)
+    })
 
+  response={
+    "count": len(artists),
+    "data": data
+  }
+  return render_template('pages/search_artists.html', results=response, search_term=search_term)
+    
+    
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
   # shows the artist page with the given artist_id
   # TODO: replace with real artist data from the artist table, using artist_id
+    
+    
+  
+  """
   data1={
     "id": 4,
     "name": "Guns N Petals",
@@ -403,6 +426,8 @@ def show_artist(artist_id):
   }
   data = list(filter(lambda d: d['id'] == artist_id, [data1, data2, data3]))[0]
   return render_template('pages/show_artist.html', artist=data)
+  
+  """
 
 #  Update
 #  ----------------------------------------------------------------
@@ -503,11 +528,33 @@ def create_artist_form():
 @app.route('/artists/create', methods=['POST'])
 def create_artist_submission():
   # called upon submitting the new artist listing form
-  # TODO: insert form data as a new Venue record in the db, instead
+  # TODO: insert form data as a new Artist record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
-
   # on successful db insert, flash success
-  flash('Artist ' + request.form['name'] + ' was successfully listed!')
+  try:
+    form = ArtistForm(request.form)
+    id = request.form.get('id')
+    name = request.form.get('name')
+    city = request.form.get('city')
+    state = request.form.get('state')
+    phone = request.form.get('phone')
+    genres = request.form.get('genres')
+    image_link = request.form.get('image_link')
+    facebook_link = request.form.get('facebook_link')
+    website = request.form.get('website')
+    seeking_venue = request.form.get('seeking_venue')
+    seeking_description = request.form.get('seeking_description')
+    
+    new_artist = Artist(id=id, name=name, city=city, state=state, phone=phone, genres=genres, image_link=image_link, facebook_link=facebook_link, website=website, seeking_venue=seeking_venue, seeking_description=seeking_description)                                    
+    db.session.add(new_artist)                                        
+    db.session.commit()
+    flash('Artist ' + request.form['name'] + ' was successfully listed!')
+  except:
+    db.session.rollback()
+    flash('An error occurred. Artist ' + name + ' could not be listed.')
+  finally:
+    db.session.close()
+    
   # TODO: on unsuccessful db insert, flash an error instead.
   # e.g., flash('An error occurred. Artist ' + data.name + ' could not be listed.')
   return render_template('pages/home.html')
