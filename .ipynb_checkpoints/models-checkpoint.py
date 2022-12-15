@@ -1,8 +1,11 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from config import *
 
 db = SQLAlchemy(app)
+
+migrate = Migrate(app, db)
 
 class Venue(db.Model):
     __tablename__ = 'Venue'

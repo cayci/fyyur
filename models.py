@@ -2,7 +2,6 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from config import *
 
-db = SQLAlchemy(app)
 
 class Venue(db.Model):
     __tablename__ = 'Venue'

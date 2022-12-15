@@ -2,6 +2,9 @@ import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_moment import Moment
+from flask_migrate import Migrate
+
+
 
 SECRET_KEY = os.urandom(32)
 # Grabs the folder where the script runs.
@@ -14,6 +17,9 @@ DEBUG = True
 app = Flask(__name__)
 moment = Moment(app)
 app.config.from_object('config')
+db = SQLAlchemy(app)
+
+migrate = Migrate(app, db)
 
 
 # TODO IMPLEMENT DATABASE URL
