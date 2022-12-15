@@ -15,6 +15,7 @@ from forms import *
 from config import *
 from models import *
 from pprint import pprint
+from datetime import datetime
 
 #----------------------------------------------------------------------------#
 # App Config.
@@ -103,6 +104,25 @@ def show_venue(venue_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
   venue = Venue.query.filter_by(id=venue_id).one()
+  upcoming = Show.query.filter_by(venue_id = venue_id).filter(Show.start_time >= datetime.today())
+  upcoming_shows = []
+  for j in upcoming:
+    upcoming_shows.append({ 
+      "artist_id": j.artist_id,
+      "artist_name": Artist.query.filter_by(id = j.artist_id).first().name,
+      "artist_image_link": Artist.query.filter_by(id = j.artist_id).first().image_link,
+      "start_time": j.start_time.strftime("%m/%d/%Y, %H:%M:%S")
+    })
+  past = Show.query.filter_by(venue_id = venue_id).filter(Show.start_time < datetime.today())
+  past_shows = []
+  for j in past:
+    past_shows.append({ 
+      "artist_id": j.artist_id,
+      "artist_name": Artist.query.filter_by(id = j.artist_id).first().name,
+      "artist_image_link": Artist.query.filter_by(id = j.artist_id).first().image_link,
+      "start_time": j.start_time.strftime("%m/%d/%Y, %H:%M:%S")
+    })
+
   data={
     "id": venue.id,
     "name": venue.name,
@@ -116,15 +136,10 @@ def show_venue(venue_id):
     "seeking_talent": venue.seeking_talent,
     "seeking_description": venue.seeking_description,
     "image_link": venue.image_link,
-    "past_shows": [{
-      "artist_id": 4,
-      "artist_name": "Guns N Petals",
-      "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-      "start_time": "2019-05-21T21:30:00.000Z"
-    }],
-    "upcoming_shows": [],
-    "past_shows_count": 1,
-    "upcoming_shows_count": 0,   
+    "past_shows": past_shows,
+    "upcoming_shows": upcoming_shows,
+    "past_shows_count": len(past_shows),
+    "upcoming_shows_count": len(upcoming_shows)
     } 
     #TODO: FINISH ARTIST AND SHOWS SECTION
   
@@ -350,6 +365,25 @@ def show_artist(artist_id):
   # shows the artist page with the given artist_id
   # TODO: replace with real artist data from the artist table, using artist_id
   artist = Artist.query.filter_by(id=artist_id).one()
+  upcoming = Show.query.filter_by(artist_id = artist_id).filter(Show.start_time >= datetime.today())
+  upcoming_shows = []
+  for j in upcoming:
+    upcoming_shows.append({ 
+      "artist_id": j.artist_id,
+      "artist_name": Artist.query.filter_by(id = j.artist_id).first().name,
+      "artist_image_link": Artist.query.filter_by(id = j.artist_id).first().image_link,
+      "start_time": j.start_time.strftime("%m/%d/%Y, %H:%M:%S")
+    })
+  past = Show.query.filter_by(artist_id = artist_id).filter(Show.start_time < datetime.today())
+  past_shows = []
+  for j in past:
+    past_shows.append({ 
+      "artist_id": j.artist_id,
+      "artist_name": Artist.query.filter_by(id = j.artist_id).first().name,
+      "artist_image_link": Artist.query.filter_by(id = j.artist_id).first().image_link,
+      "start_time": j.start_time.strftime("%m/%d/%Y, %H:%M:%S")
+    })
+    
   data={
     "id": artist.id,
     "name": artist.name,
@@ -362,15 +396,10 @@ def show_artist(artist_id):
     "seeking_venue": artist.seeking_venue,
     "seeking_description": artist.seeking_description,
     "image_link": artist.image_link,
-    "past_shows": [{
-      "artist_id": 4,
-      "artist_name": "Guns N Petals",
-      "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-      "start_time": "2019-05-21T21:30:00.000Z"
-    }],
-    "upcoming_shows": [],
-    "past_shows_count": 1,
-    "upcoming_shows_count": 0,   
+    "past_shows": past_shows,
+    "upcoming_shows": upcoming_shows,
+    "past_shows_count": len(past_shows),
+    "upcoming_shows_count": len(upcoming_shows)  
   } 
   return render_template('pages/show_artist.html', artist=data)
     #TODO: FINISH ARTIST AND SHOWS SECTION
@@ -572,6 +601,22 @@ def create_artist_submission():
 def shows():
   # displays list of shows at /shows
   # TODO: replace with real venues data.
+  data = []
+  shows = Show.query.order_by('start_time').all()
+  for show in shows:
+    venue = Venue.query.get_or_404(show.venue_id)
+    artist = Artist.query.get_or_404(show.artist_id)
+    data.append({
+      "venue_id": venue.id,
+      "venue_name": venue.name,
+      "artist_id": artist.id,
+      "artist_name": artist.name,
+      "artist_image_link": artist.image_link,
+      "start_time": str(show.start_time)
+    })  
+  return render_template('pages/shows.html', shows=data)
+  
+  """
   data=[{
     "venue_id": 1,
     "venue_name": "The Musical Hop",
@@ -609,9 +654,10 @@ def shows():
     "start_time": "2035-04-15T20:00:00.000Z"
   }]
   return render_template('pages/shows.html', shows=data)
+  """
 
 @app.route('/shows/create')
-def create_shows():
+def create_show():
   # renders form. do not touch.
   form = ShowForm()
   return render_template('forms/new_show.html', form=form)
@@ -622,24 +668,10 @@ def create_show_submission():
   # TODO: insert form data as a new Show record in the db, instead
     
   id = request.form.get('id')
-  name = request.form.get('name')
-  genres = request.form.get('genres')
-  address = request.form.get('address')
-  city = request.form.get('city')
-  state = request.form.get('state')
-  address = request.form.get('address')
-  phone = request.form.get('phone')
-  website = request.form.get('website')
-  facebook_link = request.form.get('facebook_link')
-  seeking_talent = request.form.get('seeking_talent')
-  seeking_description = request.form.get('seeking_description')
-  image_link = request.form.get('image_link')
-  past_shows = request.form.get('past_shows')
-  upcoming_shows = request.form.get('upcoming_shows')
-  past_shows_count = request.form.get('past_shows_count')
-  upcoming_shows_count = request.form.get('upcoming_shows_count')
-
-  new_show = Show(id=id, name=name, genres=genres, address=address, city=city, state=state, phone=phone, website=website, facebook_link=facebook_link,seeking_talent=seeking_talent, seeking_description=seeking_description, image_link=image_link, past_shows=past_shows, upcoming_shows=upcoming_shows, past_shows_count=past_shows_count, upcoming_shows_count=upcoming_shows_count )
+  start_time = request.form.get('start_time')
+  venue_id = request.form.get('venue_id')
+  artist_id = request.form.get('artist_id')
+  new_show = Show(id=id, start_time=start_time, venue_id=venue_id, artist_id=artist_id)
   
   db.session.add(new_show)
   db.session.commit()
