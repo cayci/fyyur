@@ -60,5 +60,3 @@ class Show(db.Model):
     
     def __repr__(self):
       return'<Show {}>'.format(self.name)
-
-db.create_all()
